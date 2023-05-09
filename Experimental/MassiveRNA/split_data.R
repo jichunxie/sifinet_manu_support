@@ -1,0 +1,27 @@
+library(Matrix)
+for (i in 0:9){
+  data <- readMM(paste("matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:10000, ], paste("10000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:20000, ], paste("20000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:50000, ], paste("50000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:100000, ], paste("100000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:200000, ], paste("200000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:400000, ], paste("400000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:600000, ], paste("600000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:800000, ], paste("800000/matrix", i, "_v.mtx", sep = ""))
+  writeMM(data[1:1000000, ], paste("1000000/matrix", i, "_v.mtx", sep = ""))
+}
+
+rm(list = ls())
+
+Z <- readRDS("Z.rds")
+saveRDS(Z[1:10000], "10000/Z.rds")
+saveRDS(Z[1:20000], "20000/Z.rds")
+saveRDS(Z[1:50000], "50000/Z.rds")
+saveRDS(Z[1:100000], "100000/Z.rds")
+saveRDS(Z[1:200000], "200000/Z.rds")
+saveRDS(Z[1:400000], "400000/Z.rds")
+saveRDS(Z[1:600000], "600000/Z.rds")
+saveRDS(Z[1:800000], "800000/Z.rds")
+saveRDS(Z[1:1000000], "1000000/Z.rds")
+rm(list = ls())

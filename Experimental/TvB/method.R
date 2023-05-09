@@ -1,0 +1,13 @@
+library(SiFINeT)
+library(GSVA)
+library(Seurat)
+#setwd("~/Desktop/SiFINeT/Result/Experimental/TvB")
+
+set.seed(1)
+genename <- readRDS("genenames.rds")
+data <- readRDS("matrix.rds")
+so <- create_SiFINeT_object(data, gene.name = genename)
+so <- quantile_thres(so)
+so <- feature_coexp(so)
+saveRDS(so, "so.rds")
+rm(list = ls())

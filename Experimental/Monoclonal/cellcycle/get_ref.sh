@@ -1,0 +1,1 @@
+wget https://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2023.1.Hs/c2.all.v2023.1.Hs.symbols.gmt -o c2.all.v2023.1.Hs.symbols.gmt

@@ -1,0 +1,20 @@
+library(SiFINeT)
+#setwd("~/Desktop/SiFINeT/Result/Numerical/SD1/")
+set.seed(1)
+for (i in 1:100){
+  set.seed(1)
+  print(i)
+  genename <- readRDS(paste("data/", i, "_name.rds", sep = ""))
+  data <- readRDS(paste("data/", i, "_matrix.rds", sep = ""))
+  so <- create_SiFINeT_object(counts = data, gene.name = genename)
+  so <- quantile_thres(so)
+  so <- feature_coexp(so)
+  so <- create_network(so)
+  so <- filter_lowexp(so)
+  so <- cal_connectivity(so)
+  so <- find_unique_feature(so)
+  so <- assign_shared_feature(so)
+  so <- enrich_feature_set(so)
+  featureset <- so@featureset
+  saveRDS(featureset, paste("data/featureset/", i, "_featureset.rds", sep = ""))
+}

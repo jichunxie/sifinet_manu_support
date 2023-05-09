@@ -1,0 +1,9 @@
+wget https://ftp.ncbi.nlm.nih.gov/geo/series/GSE135nnn/GSE135893/suppl/GSE135893_matrix.mtx.gz
+wget https://ftp.ncbi.nlm.nih.gov/geo/series/GSE135nnn/GSE135893/suppl/GSE135893_genes.tsv.gz
+wget https://ftp.ncbi.nlm.nih.gov/geo/series/GSE135nnn/GSE135893/suppl/GSE135893_barcodes.tsv.gz
+wget https://ftp.ncbi.nlm.nih.gov/geo/series/GSE135nnn/GSE135893/suppl/GSE135893_IPF_metadata.csv.gz
+gunzip GSE135893_IPF_metadata.csv.gz 
+gunzip GSE135893_barcodes.tsv.gz 
+gunzip GSE135893_genes.tsv.gz 
+gunzip GSE135893_matrix.mtx.gz 
+wget https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-022-32552-1/MediaObjects/41467_2022_32552_MOESM4_ESM.xlsx

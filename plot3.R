@@ -84,7 +84,14 @@ pcares <- prcomp(t(gsvares1))
 
 plotdata1 <- data.frame(cbind(t(gsvares), color1))
 colnames(plotdata1) <- c("GSVA_layer1_GS1", "GSVA_layer1_GS2", "CellGroup")
-plotdata1$CellGroup <- factor(plotdata1$CellGroup)
+plotdata1$CellGroup <- factor(plotdata1$CellGroup, levels = 1:7, 
+                              labels = c("Granulocyte/macrophage",
+                                         "Megakaryocyte/erythrocyte",
+                                         "Early progenitors",
+                                         "Granulocyte",
+                                         "Macrophage",
+                                         "Monocyte/dentritic",
+                                         "T/B"))
 g1 <- ggplot() + 
   geom_point(data = plotdata1, aes(x = GSVA_layer1_GS1, y = GSVA_layer1_GS2, color = CellGroup), size = 1) +
   theme_bw() + 
@@ -95,12 +102,23 @@ g1 <- ggplot() +
         axis.line = element_line(colour = "black"), 
         legend.text=element_text(size=10,face="bold"), 
         legend.title=element_text(size=10,face="bold")) +
-  scale_color_manual(values=c("#E69F00", "#56B4E9", "#999999")) + 
-  guides(size="none") + theme(legend.position = "none")
+  scale_color_manual(name = "Progenitor Cell Subpopulation",
+                     values=c("#E69F00", "#56B4E9", "#009E73", 
+                              "#F0E442", "#0072B2", "#D55E00", "#999999"),
+                     drop = FALSE) + 
+  guides(size="none") + 
+  guides(color = guide_legend(override.aes = list(size=5)))#+ theme(legend.position = "none")
 
-plotdata2 <- data.frame(cbind(pcares$x[,1:2], color2))
+plotdata2 <- data.frame(cbind(pcares$x[,1:2], color2 + 3))
 colnames(plotdata2) <- c("GSVA_layer2_PC1", "GSVA_layer2_PC2", "CellGroup")
-plotdata2$CellGroup <- factor(plotdata2$CellGroup)
+plotdata2$CellGroup <- factor(plotdata2$CellGroup, levels = 1:7, 
+                              labels = c("Granulocyte/macrophage",
+                                         "Megakaryocyte/erythrocyte ",
+                                         "Early progenitors",
+                                         "Granulocyte",
+                                         "Macrophage",
+                                         "Monocyte/dentritic",
+                                         "T/B"))
 g2 <- ggplot() + 
   geom_point(data = plotdata2, aes(x = GSVA_layer2_PC1, y = GSVA_layer2_PC2, color = CellGroup), size = 1) +
   theme_bw() + 
@@ -111,13 +129,13 @@ g2 <- ggplot() +
         axis.line = element_line(colour = "black"), 
         legend.text=element_text(size=10,face="bold"), 
         legend.title=element_text(size=10,face="bold")) +
-  scale_color_manual(values=c("#009E73", "#0072B2", "#D55E00", "#999999")) + 
-  guides(size="none") + theme(legend.position = "none")
-
-annotation1 <- plotdata1 %>% group_by(CellGroup) %>% summarise(GSVA_layer1_GS1 = median(GSVA_layer1_GS1), GSVA_layer1_GS2 = median(GSVA_layer1_GS2))
-annotation1$CellGroup <- factor(annotation1$CellGroup, labels = c("C1", "C2", "C0"))
-annotation2 <- plotdata2 %>% group_by(CellGroup) %>% summarise(GSVA_layer2_PC1 = median(GSVA_layer2_PC1), GSVA_layer2_PC2 = median(GSVA_layer2_PC2))
-annotation2$CellGroup <- factor(annotation2$CellGroup, labels = c("C1a", "C1b", "C1c", "C1d"))
+  scale_color_manual(name = "Progenitor Cell Subpopulation",
+                     values = c("#E69F00", "#56B4E9", "#009E73", 
+                                "#F0E442", "#0072B2", "#D55E00", "#999999"),
+                     drop = FALSE) + 
+  guides(size="none") + 
+  guides(color = guide_legend(override.aes = list(size=5))) + 
+  theme(legend.position = "none")
 
 g3 <- g1  + 
   annotate(geom = "segment", x = 0, xend = 0.65, y = -0.65, yend = -0.65) + 
@@ -125,23 +143,17 @@ g3 <- g1  +
   annotate(geom = "segment", x = 0, xend = 0, y = 0, yend = -0.65) + 
   annotate(geom = "segment", x = 0.65, xend = 0.65, y = 0, yend = -0.65) + 
   annotate(geom = "segment", x = 0.65, xend = 0.75, y = 0, yend = 0.7) + 
-  annotate(geom = "segment", x = 0.65, xend = 0.75, y = -0.65, yend = -0.7) + 
-  annotate(geom = "text", x = annotation1$GSVA_layer1_GS1, y = annotation1$GSVA_layer1_GS2, 
-           label = annotation1$CellGroup, fontface = 2, size = 6)
+  annotate(geom = "segment", x = 0.65, xend = 0.75, y = -0.65, yend = -0.7)
 
-g4 <- g2  + 
-  annotate(geom = "text", x = annotation2$GSVA_layer2_PC1, y = annotation2$GSVA_layer2_PC2, 
-           label = annotation2$CellGroup, fontface = 2, size = 6)
-
-g5 <- ggarrange(g3, g4, nrow = 1, labels = c("d", "e")) 
+g5 <- ggarrange(g3, g2, nrow = 1, labels = c("d", "e"), common.legend = TRUE, legend="right") 
 
 # Gene expression
 table(color2)
 table(color1)
 cell_group <- c(unname(table(color2)), unname(table(color1))[3:2])
 
-selected_gene <- c("Cebpa", "Elane", "Mpo", "Cebpe", "Ndufa4", "Sub1", 
-                   "Irf8", "Ctss", "Gata1", "Gfi1b", "Klf1")
+selected_gene <- c("Cebpa", "Elane", "Mpo", "Cebpe", "Ndufa4", "Sub1", "Irf8", "Ctss", 
+                   "Cst3", "Cd34", "Cd27", "Gata2", "Apoe", "Gata1", "Gfi1b", "Klf1")
 a <- order(color2)
 
 data <- readRDS("matrix.rds")
@@ -159,12 +171,10 @@ rm(data1, data2, data3, data, data_temp)
 
 data_final <- as.matrix(data_final)
 data_final2 <- data_final
-for (i in 1:11){
+for (i in 1:16){
   data_final2[i, ] <- (data_final[i, ] - min(data_final[i, ]))/diff(range(data_final[i, ]))
 }
-selected_gene_label <- 
-  c("Cebpa(S1)", "Elane(S1,S1a)", "Mpo(S1,S1a)", "Cebpe(S1a)", "Ndufa4(S1b)", 
-    "Sub1(S1b)", "Irf8(S1c)", "Ctss(S1c)", "Gata1(S2)", "Gfi1b(S2)", "Klf1(S2)")
+selected_gene_label <- selected_gene
 rownames(data_final2) <- selected_gene_label
 
 data_final1 <- data_final2 %>% 
@@ -191,8 +201,13 @@ g1
 
 g2 <- g1 + 
   annotate("text",x = c(0, cumsum(cell_group[1:(length(cell_group) - 1)])) + cell_group / 2, 
-           y=-0.5, label = c("C1a", "C1b", "C1c", "C1d", "C0", "C2"), size = 3) + 
-  coord_cartesian(ylim=c(1, 11), clip="off")
+           y=-0.5, label = c("Granulocyte",
+                             "Macrophage",
+                             "Monocyte/dentritic",
+                             "T/B",
+                             "Early progenitors",
+                             "Megakaryocyte/erythrocyte"), size = 3) + 
+  coord_cartesian(ylim=c(1, 16), clip="off")
 
 
 g7 <- ggarrange(p4, g5, g2, ncol = 1, labels = c("", "", "f"))

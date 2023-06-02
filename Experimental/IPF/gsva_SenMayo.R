@@ -3,6 +3,7 @@ library(Seurat)
 library(readxl)
 
 #setwd("~/Desktop/SiFINeT/Result/Experimental/IPF")
+set.seed(1)
 
 gene_list <- list()
 data <- readRDS("1_matrix.rds")

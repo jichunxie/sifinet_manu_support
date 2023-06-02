@@ -5,8 +5,8 @@ library(Seurat)
 
 # RNA
 set.seed(1)
-genename <- readRDS("../PreprocessedData/CD8_genename.rds")
-data <- readRDS("../PreprocessedData/CD8_rna_matrix.rds")
+genename <- readRDS("PreprocessedData/CD8_genename.rds")
+data <- readRDS("PreprocessedData/CD8_rna_matrix.rds")
 so <- create_SiFINeT_object(counts = data, gene.name = genename)
 so <- quantile_thres(so)
 so <- feature_coexp(so)
@@ -40,8 +40,8 @@ rm(list = ls())
 
 # ATAC
 set.seed(1)
-genename <- readRDS("../PreprocessedData/CD8_genename.rds")
-data <- readRDS("../PreprocessedData/CD8_atac_matrix.rds")
+genename <- readRDS("PreprocessedData/CD8_genename.rds")
+data <- readRDS("PreprocessedData/CD8_atac_matrix.rds")
 so <- create_SiFINeT_object(counts = data, gene.name = genename)
 so <- quantile_thres(so)
 so <- feature_coexp(so)

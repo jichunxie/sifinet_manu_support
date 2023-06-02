@@ -1,5 +1,5 @@
 #setwd("~/Desktop/SiFINeT/Result/Experimental/TCell/")
-setwd("../")
+#setwd("../")
 library(Matrix)
 
 cell_annotation <- readRDS("OriginalData/multi_annotation.rds")
@@ -13,7 +13,7 @@ peak_annotation$peakname <- gsub("_","-", peak_annotation$peak)
 peak_annotation$peak_id <- 1:nrow(peak_annotation)
 peak_annotation$distance <- as.numeric(peak_annotation$distance)
 
-cellidx <- which(cell_annotation %in% c("CD4 Naive", "CD4 TCM", "CD4 TEM"))
+cellidx <- which(cell_annotation %in% c("CD8 Naive", "CD8 TEM_1", "CD8 TEM_2"))
 data <- data[, cellidx]
 
 
@@ -77,8 +77,8 @@ idx <- match(colnames(data1), colnames(data))
 rownames(data2) <- rownames(data1)
 colnames(data2) <- colnames(data1)
 
-saveRDS(data1, "PreprocessedData/CD4_rna_matrix.rds")
-saveRDS(data2, "PreprocessedData/CD4_atac_matrix.rds")
-saveRDS(genenames, "PreprocessedData/CD4_genename.rds")
-saveRDS(cell_annotation[idx], "PreprocessedData/CD4_celltype.rds")
+saveRDS(data1, "PreprocessedData/CD8_rna_matrix.rds")
+saveRDS(data2, "PreprocessedData/CD8_atac_matrix.rds")
+saveRDS(genenames, "PreprocessedData/CD8_genename.rds")
+saveRDS(cell_annotation[idx], "PreprocessedData/CD8_celltype.rds")
 rm(list = ls())

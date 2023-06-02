@@ -8,7 +8,11 @@ library(Matrix)
 
 set.seed(1)
 
+
 # Supp Fig 1
+# In plot2.R
+
+# Supp Fig 2
 setwd("~/Desktop/SiFINeT/Result_final/")
 setwd("Numerical/SD1/")
 data <- readRDS("data/18_matrix.rds")
@@ -45,50 +49,14 @@ g2 <- DimPlot(so, reduction = "umap", group.by = "group2") +
   )
 
 ggarrange(g1, g2, nrow = 1, labels = "auto")
-ggsave("../../Supp_Fig1.jpeg", width = 6, height = 2.5, 
+ggsave("../../Supp_Fig2.jpeg", width = 6, height = 2.5, 
        units = "in", device='jpeg', dpi=600)
-
-# Supp Fig 2
-# In plot2
 
 # Supp Fig 3
 # In plot3
 
 # Supp Fig 4
-setwd("../../Experimental/BoneMarrow")
-set.seed(1)
-
-selected_gene <- c("Gata2")
-data <- readRDS("matrix.rds")
-color <- data[match(selected_gene, rownames(data)), ]
-gsvares <- readRDS("gsva_res.rds")
-gsvares <- rbind(gsvares[2,], gsvares[1,])
-
-plotdata1 <- data.frame(cbind(t(gsvares), color))
-colnames(plotdata1) <- c("GSVA_layer1_GS1", "GSVA_layer1_GS2", "Expression")
-g1 <- ggplot() + 
-  geom_point(data = plotdata1, aes(x = GSVA_layer1_GS1, y = GSVA_layer1_GS2, color = Expression), size = 0.01) +
-  scale_colour_gradient2(low="navy", mid="white", high="red", midpoint = -0.2) +
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), 
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        panel.border = element_blank(), 
-        axis.line = element_line(colour = "black"), 
-        legend.text=element_text(size=10,face="bold"), 
-        legend.title=element_text(size=10,face="bold"))
-
-g3 <- g1  + 
-  annotate(geom = "segment", x = 0, xend = -0.65, y = -0.65, yend = -0.65) + 
-  annotate(geom = "segment", x = 0, xend = -0.65, y = 0, yend = 0) + 
-  annotate(geom = "segment", x = 0, xend = 0, y = 0, yend = -0.65) + 
-  annotate(geom = "segment", x = -0.65, xend = -0.65, y = 0, yend = -0.65)
-g3
-ggsave("../../Supp_Fig4.jpeg", width = 3, height = 2.5, 
-       units = "in", device='jpeg', dpi=600)
-
-# Supp Fig 5
-setwd("../MassiveRNA/")
+setwd("../../Experimental/MassiveRNA/")
 
 timeres <- read.table("time_res.txt")
 timeres <- timeres[, 3]
@@ -135,12 +103,12 @@ p2 <- ggplot(time_mem_data, aes(log_ncell, log_peak_memory)) +
 
 p3 <- ggarrange(p1, p2, nrow = 1,
                 labels = "auto")
-ggsave("../..//Supp_Fig5.jpeg", width = 8, height = 3, 
+ggsave("../../Supp_Fig4.jpeg", width = 8, height = 3, 
        units = "in", device='jpeg', dpi=600)
 
 
 
-# Supp Fig 6
+# Supp Fig 8
 setwd("../../Numerical/SD1/data")
 cluster_setting <- c("_cluster_seurat.rds", 
                      "_cluster_louvain.rds",
@@ -176,10 +144,10 @@ ggplot(plotdata, aes(x=Setting, y=ARI, fill = Method)) +
         legend.text=element_text(size=12,face="bold"), 
         legend.title=element_text(size=14,face="bold"))
 
-ggsave("../../../Supp_Fig6.jpeg", width = 4, height = 3, 
+ggsave("../../../Supp_Fig8.jpeg", width = 4, height = 3, 
        units = "in", device='jpeg', dpi=600)
 
-# Supp Fig 7
+# Supp Fig 9
 
 setwd("../../../Experimental/TvB/")
 so <- readRDS("so.rds")
@@ -242,5 +210,5 @@ ggplot(plotdata, aes(plotx, ploty, color = label)) +
   scale_color_manual(values = c("orange", "green", "red", "blue", "gray")) + 
   guides(fill=guide_legend(title="Coexpression type"))
 
-ggsave("../../Supp_fig7.jpeg", width = 4, height = 3, 
+ggsave("../../Supp_fig9.jpeg", width = 4, height = 3, 
        units = "in", device='jpeg', dpi=600)

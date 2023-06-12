@@ -9,10 +9,10 @@ library(Matrix)
 set.seed(1)
 
 
-# Supp Fig 1
+# Supp_sd1_res
 # In plot2.R
 
-# Supp Fig 2
+# Supp_sd1_umap
 setwd("~/Desktop/SiFINeT/Result_final/")
 setwd("Numerical/SD1/")
 data <- readRDS("data/18_matrix.rds")
@@ -49,13 +49,77 @@ g2 <- DimPlot(so, reduction = "umap", group.by = "group2") +
   )
 
 ggarrange(g1, g2, nrow = 1, labels = "auto")
-ggsave("../../Supp_Fig2.jpeg", width = 6, height = 2.5, 
+ggsave("../../Supp_sd1_umap.jpeg", width = 6, height = 2.5, 
        units = "in", device='jpeg', dpi=600)
 
-# Supp Fig 3
+# Supp_mono_clu
 # In plot3
 
-# Supp Fig 4
+# Supp_cd8_trans
+setwd("../../Experimental/CD8")
+set.seed(1)
+
+# SiFINeT+GSVA
+gsva_mat <- readRDS("gsva_res_rna.rds")
+gsva_mat_temp <- rbind(gsva_mat, rep(0, ncol(gsva_mat)))
+cell_group <- apply(gsva_mat_temp[,], 2, which.max)
+
+selected_gene <- c("Ccr7", "Foxo1", "Foxp1", "Tcf7", "Gzma", "Klrd1", "Klrg1")
+
+data <- readRDS("PreprocessedData/CD8_rna_matrix.rds")
+data_temp <- data[match(toupper(selected_gene), rownames(data)), ]
+data1 <- list()
+for (i in 1:5){
+  data1[[i]] <- data_temp[, cell_group == i]
+}
+
+data_final <- cbind(data1[[1]], data1[[3]], data1[[5]], data1[[2]])
+data_final <- as.matrix(data_final)
+data_final2 <- data_final
+for (i in 1:7){
+  data_final2[i, ] <- (data_final[i, ] - min(data_final[i, ]))/diff(range(data_final[i, ]))
+}
+selected_gene_label <- selected_gene
+rownames(data_final2) <- selected_gene_label
+
+data_final1 <- data_final2 %>% 
+  as.data.frame() %>%
+  rownames_to_column("Gene_name") %>%
+  pivot_longer(-c(Gene_name), names_to = "Sample_name", values_to = "counts")
+data_final1$Gene_name <- factor(data_final1$Gene_name, levels = selected_gene_label)
+data_final1$Sample_name <- factor(data_final1$Sample_name, levels = colnames(data_final2))
+
+group_count <- sapply(data1, ncol)
+group_count <- group_count[c(1,3,5,2)]
+
+g1 <- ggplot(data_final1, aes(Sample_name, Gene_name, fill= counts)) + 
+  geom_tile() + 
+  scale_fill_gradient2(low="navy", mid="white", high="red", midpoint = 0) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+  theme(legend.text=element_text(size=10,face="bold"), 
+        legend.title=element_text(size=12,face="bold"),
+        axis.text.x=element_blank(), #remove x axis labels
+        axis.title.x=element_blank(), 
+        axis.title.y=element_blank(), 
+        axis.ticks.x=element_blank(),
+        plot.margin = unit(c(0.01, 0.01, 0.1, 0.03), "npc")) + theme(legend.position = "none") + 
+  geom_vline(xintercept = cumsum(group_count))
+g1
+
+g2 <- g1 + 
+  annotate("text",x = c(0, cumsum(group_count[1:(length(group_count) - 1)])) + group_count / 2, 
+           y=-0.05, label = c("TEM_1",
+                              "TEM_2",
+                              "TCM-TEM trans",
+                              "TCM"), size = 3) + 
+  coord_cartesian(ylim=c(1, 7), clip="off")
+g2
+ggsave("../../Supp_cd8_trans.jpeg", width = 6, height = 2.5, 
+       units = "in", device='jpeg', dpi=600)
+
+
+# Supp_mdata_time_mem
 setwd("../../Experimental/MassiveRNA/")
 
 timeres <- read.table("time_res.txt")
@@ -103,12 +167,12 @@ p2 <- ggplot(time_mem_data, aes(log_ncell, log_peak_memory)) +
 
 p3 <- ggarrange(p1, p2, nrow = 1,
                 labels = "auto")
-ggsave("../../Supp_Fig4.jpeg", width = 8, height = 3, 
+ggsave("../../Supp_mdata_time_mem.jpeg", width = 8, height = 3, 
        units = "in", device='jpeg', dpi=600)
 
 
 
-# Supp Fig 8
+# Supp_sd1_cluster
 setwd("../../Numerical/SD1/data")
 cluster_setting <- c("_cluster_seurat.rds", 
                      "_cluster_louvain.rds",
@@ -144,10 +208,10 @@ ggplot(plotdata, aes(x=Setting, y=ARI, fill = Method)) +
         legend.text=element_text(size=12,face="bold"), 
         legend.title=element_text(size=14,face="bold"))
 
-ggsave("../../../Supp_Fig8.jpeg", width = 4, height = 3, 
+ggsave("../../../Supp_sd1_cluster.jpeg", width = 4, height = 3, 
        units = "in", device='jpeg', dpi=600)
 
-# Supp Fig 9
+# Supp_imm_coex
 
 setwd("../../../Experimental/TvB/")
 so <- readRDS("so.rds")
@@ -210,5 +274,5 @@ ggplot(plotdata, aes(plotx, ploty, color = label)) +
   scale_color_manual(values = c("orange", "green", "red", "blue", "gray")) + 
   guides(fill=guide_legend(title="Coexpression type"))
 
-ggsave("../../Supp_fig9.jpeg", width = 4, height = 3, 
+ggsave("../../Supp_imm_coex.jpeg", width = 4, height = 3, 
        units = "in", device='jpeg', dpi=600)

@@ -149,7 +149,7 @@ p1
 
 
 
-jpeg("../..//Supp_Fig1.jpeg", width = 8, height = 8, units = "in", res = 300)
+jpeg("../../Supp_sd1_res.jpeg", width = 8, height = 8, units = "in", res = 300)
 p1 + theme(plot.margin = unit(c(0, 0.15, 0, 0), "npc")) 
 grid.text(unit(0.86, "npc"), unit(0.75, "npc"), 
           label=expression(paste('SifiNet'),'type=4'), 

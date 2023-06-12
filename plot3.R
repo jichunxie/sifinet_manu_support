@@ -66,7 +66,7 @@ p4 <- ggarrange(p2, p1, p3, nrow = 1, common.legend = TRUE,
 
 psupp <- DimPlot(so, reduction = "umap", group.by = "CIDRcluster_default", dims = c(1, 2)) + labs(title = NULL)
 psupp
-ggsave("../../Supp_Fig3.jpeg", width = 2.5, height = 2.5, 
+ggsave("../../Supp_mono_clu.jpeg", width = 2.5, height = 2.5, 
        units = "in", device='jpeg', dpi=600)
 
 setwd("../BoneMarrow")

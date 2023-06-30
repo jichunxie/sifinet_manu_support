@@ -124,8 +124,8 @@ a$SifiNet_rna_cell_cluster <- gsva_group_rna[nNA_idx]
 a$SifiNet_rna_cell_cluster <- factor(a$SifiNet_rna_cell_cluster, 
                                      levels = c("CD8_R_1", "CD8_R_2", "CD8_R_3",
                                                 "CD8_R_4", "CD8_R_NA"),
-                                     labels = c("TEM_1", "TCM", "TEM_2", 
-                                                "TNaive", "TCM-TEM trans"))
+                                     labels = c("TEM_1", "TCM_1", "TEM_2", 
+                                                "TNaive", "TCM_2"))
 a$SifiNet_atac_cell_cluster <- gsva_group_atac[nNA_idx]
 a$SifiNet_atac_cell_cluster <- factor(a$SifiNet_atac_cell_cluster,
                                       levels = c("CD8_A_1", "CD8_A_2"),
@@ -233,7 +233,7 @@ image2 <- jpeg::readJPEG("gt2.jpeg")
 
 g7 <- g5 + annotation_custom(grob = rasterGrob(image1, interpolate = TRUE, 
                                                width=unit(0.8,'npc'),
-                                               x = unit(0.93,"npc"), y = unit(0.6,"npc"),
+                                               x = unit(0.85,"npc"), y = unit(0.6,"npc"),
                                                hjust = 0, vjust = 0)) +
   coord_cartesian(clip = "off")
 g7

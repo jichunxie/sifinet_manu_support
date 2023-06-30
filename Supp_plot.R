@@ -5,6 +5,8 @@ library(mclust)
 library(tidyverse)
 library(cogena)
 library(Matrix)
+library(ggnewscale)
+library(stringr)
 
 set.seed(1)
 
@@ -111,8 +113,8 @@ g2 <- g1 +
   annotate("text",x = c(0, cumsum(group_count[1:(length(group_count) - 1)])) + group_count / 2, 
            y=-0.05, label = c("TEM_1",
                               "TEM_2",
-                              "TCM-TEM trans",
-                              "TCM"), size = 3) + 
+                              "TCM_2",
+                              "TCM_1"), size = 3) + 
   coord_cartesian(ylim=c(1, 7), clip="off")
 g2
 ggsave("../../Supp_cd8_trans.jpeg", width = 6, height = 2.5, 
@@ -256,11 +258,17 @@ refx <- seq(-5, 5, length.out = length(da$x))
 refy <- dnorm(refx)
 
 
+
 plotx <- c(da$x, db$x, dd$x, de$x, refx)
 ploty <- c(da$y, db$y, dd$y, de$y, refy)
-label <- rep(c("Same", "Different", "One", "None", "Reference"), 
+mvec <- c(mean(a), mean(b), mean(d), mean(e), 0)
+sdvec <- c(sd(a), sd(b), sd(d), sd(e), 1)
+coextype <- c("Same", "Different", "One", "None", "Reference")
+lege <- paste(coextype, " (mean: ", round(mvec, 2), ", sd: ", round(sdvec, 2), ")", sep = "")
+
+label <- rep(coextype, 
              c(length(da$x), length(db$x), length(dd$x), length(de$x), length(de$x)))
-label <- factor(label, levels = c("Same", "Different", "One", "None", "Reference"))
+label <- factor(label, levels = coextype, labels = lege)
 plotdata <- data.frame(plotx, ploty, label)
 plotdata <- plotdata[abs(plotdata$plotx) <= 10, ]
 
@@ -274,5 +282,87 @@ ggplot(plotdata, aes(plotx, ploty, color = label)) +
   scale_color_manual(values = c("orange", "green", "red", "blue", "gray")) + 
   guides(fill=guide_legend(title="Coexpression type"))
 
-ggsave("../../Supp_imm_coex.jpeg", width = 4, height = 3, 
+ggsave("../../Supp_imm_coex.jpeg", width = 5, height = 3, 
+       units = "in", device='jpeg', dpi=600)
+
+
+
+
+# Supp_thres
+setwd("../../Experimental/Monoclonal/")
+
+so <- readRDS("so.rds")
+con1 <- so@conn
+
+pathgene <- readRDS("cellcycle/pathgene.rds")
+con_path <- data.frame(con1)[(con1$name %in% str_to_title(pathgene)) & (con1$C1 != 0), ]
+ccgene <- readRDS("cellcycle/ccgene.rds")
+con_ccgene <- data.frame(con1)[(con1$name %in% str_to_title(ccgene)) & (con1$C1 != 0), ]
+hubgene <- readRDS("cellcycle/hubgene.rds")
+con_hub <- data.frame(con1)[(con1$name %in% str_to_title(hubgene)) & (con1$C1 != 0), ]
+con_ccgene$C1 <- log2(con_ccgene$C1 / (nrow(so@coexp) - 1))
+con_path$C1 <- log2(con_path$C1 / (nrow(so@coexp) - 1))
+con_hub$C1 <- log2(con_hub$C1 / (nrow(so@coexp) - 1))
+
+
+g1 <- ggplot(data = con_ccgene, aes(x = C2, y = C3)) + theme_bw() + 
+  stat_density2d(aes(colour = ..level.., fill = ..level..), geom = "polygon", show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightpink", high = "red") +  
+  scale_fill_gradient(low = "lightpink", high = "red") + 
+  new_scale_color() +
+  stat_density2d(data = con_path, aes(x = C2, y = C3, colour = ..level..), show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightgreen", high = "darkgreen") + 
+  new_scale_color() +
+  stat_density2d(data = con_hub, aes(x = C2, y = C3, colour = ..level..), show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightblue", high = "blue") + 
+  geom_vline(xintercept = 0.4, color = "black") + 
+  geom_hline(yintercept = 0.3, color = "black") + 
+  labs(x = "C2i", y = "C3i") + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        legend.title=element_blank())
+
+
+
+g2 <- ggplot(data = con_ccgene, aes(x = C1, y = C3)) + theme_bw() + 
+  stat_density2d(aes(colour = ..level.., fill = ..level..), geom = "polygon", show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightpink", high = "red") +  
+  scale_fill_gradient(low = "lightpink", high = "red") + 
+  new_scale_color() +
+  stat_density2d(data = con_path, aes(x = C1, y = C3, colour = ..level..), show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightgreen", high = "darkgreen") + 
+  new_scale_color() +
+  stat_density2d(data = con_hub, aes(x = C1, y = C3, colour = ..level..), show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightblue", high = "blue") + 
+  geom_vline(xintercept = log2(5 / (nrow(so@coexp) - 1)), color = "black") + 
+  geom_hline(yintercept = 0.3, color = "black") + 
+  labs(x = "C1i", y = "C3i") + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        legend.title=element_blank())
+
+
+
+g3 <- ggplot(data = con_ccgene, aes(x = C1, y = C2)) + theme_bw() + 
+  stat_density2d(aes(colour = ..level.., fill = ..level..), geom = "polygon", show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightpink", high = "red") +  
+  scale_fill_gradient(low = "lightpink", high = "red") + 
+  new_scale_color() +
+  stat_density2d(data = con_path, aes(x = C1, y = C2, colour = ..level..), show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightgreen", high = "darkgreen") + 
+  new_scale_color() +
+  stat_density2d(data = con_hub, aes(x = C1, y = C2, colour = ..level..), show.legend = FALSE) + 
+  scale_colour_gradient(low = "lightblue", high = "blue") + 
+  geom_vline(xintercept = log2(5 / (nrow(so@coexp) - 1)), color = "black") + 
+  geom_hline(yintercept = 0.4, color = "black") + 
+  labs(x = "C1i", y = "C2i") + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        legend.title=element_blank())
+
+g4 <- ggarrange(g1, g2, g3, ncol = 1,
+                labels = "auto")
+
+
+ggsave("../../Supp_thres.jpeg", width = 5, height = 9, 
        units = "in", device='jpeg', dpi=600)

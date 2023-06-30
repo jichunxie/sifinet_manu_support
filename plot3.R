@@ -49,11 +49,11 @@ so <- AddMetaData(so, cluster_d, col.name = "CIDRcluster_default")
 so <- AddMetaData(so, cluster_k, col.name = "CIDRcluster")
 
 p1 <- DimPlot(so, reduction = "umap", group.by = "ccgroup", dims = c(1,2), 
-              cols = c("orange", "blue", "green")) + labs(title = NULL)
+              cols = c("orange", "blue", "green")) + labs(title = "Seurat score")
 p2 <- DimPlot(so, reduction = "umap", group.by = "gsva_cell_type", dims = c(1,2), 
-              cols = c("orange", "blue", "green")) + labs(title = NULL)
+              cols = c("orange", "blue", "green")) + labs(title = "SifiNet")
 p3 <- DimPlot(so, reduction = "umap", group.by = "CIDRcluster", dims = c(1, 2), 
-              cols = c("blue", "green", "orange")) + labs(title = NULL) + 
+              cols = c("blue", "green", "orange")) + labs(title = "CIDR clustering") + 
   geom_circle(aes(x0=1, y0=-0.8, r=0.8), col = "red", inherit.aes = FALSE) + 
   geom_circle(aes(x0=-1, y0=-2, r=0.8), col = "red", inherit.aes = FALSE)
 
@@ -76,14 +76,19 @@ set.seed(1)
 gsvares <- readRDS("gsva_res.rds")
 gsvares <- rbind(gsvares[2,], gsvares[1,])
 color1 <- ifelse(gsvares[1,] > 0, 1, ifelse(gsvares[2,] > 0, 2, 3))
+pcares <- prcomp(t(gsvares))
 
 gsvares1 <- readRDS("gsva_res_1.rds")
 gsvares1_temp <- rbind(gsvares1, rep(0, ncol(gsvares1)))
 color2 <- apply(gsvares1_temp, 2, which.max)
-pcares <- prcomp(t(gsvares1))
+pcares1 <- prcomp(t(gsvares1))
 
-plotdata1 <- data.frame(cbind(t(gsvares), color1))
-colnames(plotdata1) <- c("GSVA_layer1_GS1", "GSVA_layer1_GS2", "CellGroup")
+boundary <- matrix(c(0, 0, 0, -0.65, 0.65, -0.65, 0.65, -0.4), ncol = 2, byrow = T)
+b <- (boundary - matrix(pcares$center, nrow = nrow(boundary), ncol = 2, byrow = T)) %*% pcares$rotation
+
+
+plotdata1 <- data.frame(cbind(pcares$x[,1:2], color1))
+colnames(plotdata1) <- c("GSVA_layer1_PC1", "GSVA_layer1_PC2", "CellGroup")
 plotdata1$CellGroup <- factor(plotdata1$CellGroup, levels = 1:7, 
                               labels = c("Granulocyte/macrophage",
                                          "Megakaryocyte/erythrocyte",
@@ -93,7 +98,7 @@ plotdata1$CellGroup <- factor(plotdata1$CellGroup, levels = 1:7,
                                          "Monocyte/dentritic",
                                          "T/B"))
 g1 <- ggplot() + 
-  geom_point(data = plotdata1, aes(x = GSVA_layer1_GS1, y = GSVA_layer1_GS2, color = CellGroup), size = 1) +
+  geom_point(data = plotdata1, aes(x = GSVA_layer1_PC1, y = GSVA_layer1_PC2, color = CellGroup), size = 1) +
   theme_bw() + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), 
         panel.grid.major = element_blank(),
@@ -109,7 +114,7 @@ g1 <- ggplot() +
   guides(size="none") + 
   guides(color = guide_legend(override.aes = list(size=5)))#+ theme(legend.position = "none")
 
-plotdata2 <- data.frame(cbind(pcares$x[,1:2], color2 + 3))
+plotdata2 <- data.frame(cbind(pcares1$x[,1:2], color2 + 3))
 colnames(plotdata2) <- c("GSVA_layer2_PC1", "GSVA_layer2_PC2", "CellGroup")
 plotdata2$CellGroup <- factor(plotdata2$CellGroup, levels = 1:7, 
                               labels = c("Granulocyte/macrophage",
@@ -138,12 +143,12 @@ g2 <- ggplot() +
   theme(legend.position = "none")
 
 g3 <- g1  + 
-  annotate(geom = "segment", x = 0, xend = 0.65, y = -0.65, yend = -0.65) + 
-  annotate(geom = "segment", x = 0, xend = 0.65, y = 0, yend = 0) + 
-  annotate(geom = "segment", x = 0, xend = 0, y = 0, yend = -0.65) + 
-  annotate(geom = "segment", x = 0.65, xend = 0.65, y = 0, yend = -0.65) + 
-  annotate(geom = "segment", x = 0.65, xend = 0.75, y = 0, yend = 0.7) + 
-  annotate(geom = "segment", x = 0.65, xend = 0.75, y = -0.65, yend = -0.7)
+  annotate(geom = "segment", x = b[1,1], xend = b[2,1], y = b[1,2], yend = b[2,2]) + 
+  annotate(geom = "segment", x = b[2,1], xend = b[3,1], y = b[2,2], yend = b[3,2]) + 
+  annotate(geom = "segment", x = b[3,1], xend = b[4,1], y = b[3,2], yend = b[4,2]) + 
+  annotate(geom = "segment", x = b[4,1], xend = b[1,1], y = b[4,2], yend = b[1,2]) + 
+  annotate(geom = "segment", x = b[2,1], xend = 1.1, y = b[2,2], yend = 0.4) + 
+  annotate(geom = "segment", x = b[1,1], xend = 1.1, y = b[1,2], yend = -0.3)
 
 g5 <- ggarrange(g3, g2, nrow = 1, labels = c("d", "e"), common.legend = TRUE, legend="right") 
 

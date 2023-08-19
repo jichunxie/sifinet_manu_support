@@ -92,11 +92,11 @@ colnames(plotdata1) <- c("GSVA_layer1_PC1", "GSVA_layer1_PC2", "CellGroup")
 plotdata1$CellGroup <- factor(plotdata1$CellGroup, levels = 1:7, 
                               labels = c("Granulocyte/macrophage",
                                          "Megakaryocyte/erythrocyte",
-                                         "Early progenitors",
+                                         "Early myeloid progenitors",
                                          "Granulocyte",
                                          "Macrophage",
                                          "Monocyte/dentritic",
-                                         "T/B"))
+                                         "Lymphoid progenitors"))
 g1 <- ggplot() + 
   geom_point(data = plotdata1, aes(x = GSVA_layer1_PC1, y = GSVA_layer1_PC2, color = CellGroup), size = 1) +
   theme_bw() + 
@@ -119,11 +119,11 @@ colnames(plotdata2) <- c("GSVA_layer2_PC1", "GSVA_layer2_PC2", "CellGroup")
 plotdata2$CellGroup <- factor(plotdata2$CellGroup, levels = 1:7, 
                               labels = c("Granulocyte/macrophage",
                                          "Megakaryocyte/erythrocyte ",
-                                         "Early progenitors",
+                                         "Early myeloid progenitors",
                                          "Granulocyte",
                                          "Macrophage",
                                          "Monocyte/dentritic",
-                                         "T/B"))
+                                         "Lymphoid progenitors"))
 g2 <- ggplot() + 
   geom_point(data = plotdata2, aes(x = GSVA_layer2_PC1, y = GSVA_layer2_PC2, color = CellGroup), size = 1) +
   theme_bw() + 
@@ -200,18 +200,18 @@ g1 <- ggplot(data_final1, aes(Sample_name, Gene_name, fill= counts)) +
         axis.title.x=element_blank(), 
         axis.title.y=element_blank(), 
         axis.ticks.x=element_blank(),
-        plot.margin = unit(c(0.01, 0.01, 0.1, 0.03), "npc")) + theme(legend.position = "none") + 
+        plot.margin = unit(c(0.1, 0.01, 0.15, 0.03), "npc")) + theme(legend.position = "none") + 
   geom_vline(xintercept = cumsum(cell_group))
 g1
 
 g2 <- g1 + 
   annotate("text",x = c(0, cumsum(cell_group[1:(length(cell_group) - 1)])) + cell_group / 2, 
-           y=-0.5, label = c("Granulocyte",
+           y=-0.9, label = c("Granulocyte",
                              "Macrophage",
                              "Monocyte/dentritic",
-                             "T/B",
-                             "Early progenitors",
-                             "Megakaryocyte/erythrocyte"), size = 3) + 
+                             "Lymphoid progenitors",
+                             "Early myeloid progenitors",
+                             "Megakaryocyte/erythrocyte"), size = 3, angle = 10) + 
   coord_cartesian(ylim=c(1, 16), clip="off")
 
 

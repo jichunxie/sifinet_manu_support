@@ -3,6 +3,8 @@ library(mclust)
 library(grid)
 library(ggpubr)
 library(ggplot2)
+library(magick)
+library(tiff)
 
 setwd("~/Desktop/SiFINeT/Result_final")
 setwd("Numerical/SD1/")
@@ -149,7 +151,7 @@ p1
 
 
 
-jpeg("../../Supp_sd1_res.jpeg", width = 8, height = 8, units = "in", res = 300)
+tiff("../../Supp_sd1_res.tiff", width = 8, height = 8, units = "in", res = 1200)
 p1 + theme(plot.margin = unit(c(0, 0.15, 0, 0), "npc")) 
 grid.text(unit(0.86, "npc"), unit(0.75, "npc"), 
           label=expression(paste('SifiNet'),'type=4'), 
@@ -166,9 +168,9 @@ grid.text(unit(0.86, "npc"), unit(0.32, "npc"),
 dev.off()
 
 
-
-
-
+pdf("../../Supp_sd1_res.pdf")
+plot(image_read("../../Supp_sd1_res.tiff"))
+dev.off()
 
 
 
@@ -351,5 +353,5 @@ p4
 p6 <- ggarrange(p2, p3, p4, nrow = 3,
                 labels = "auto")
 p6
-ggsave("../../Fig2.jpeg", width = 8, height = 8, 
-       units = "in", device='jpeg', dpi=1200)
+ggsave("../../Fig2.pdf", width = 8, height = 8, 
+       units = "in", device='pdf', dpi=1200)

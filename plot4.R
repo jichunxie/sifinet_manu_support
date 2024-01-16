@@ -7,6 +7,7 @@ library(ggraph)
 library(jpeg)
 library(grid)
 
+set.seed(1)
 setwd("~/Desktop/SiFINeT/Result_final/")
 setwd("Numerical/SD2")
 g1 <- readRDS("SD2_monocle3_plot.rds")
@@ -41,6 +42,7 @@ g2 <- ggplot() +
 
 so <- readRDS("so.rds")
 geneset <- so@featureset
+edge_mat <- 1 * ((so@coexp - so@est_ms$mean) >= so@thres)
 gene_list <- list()
 for (i in 1:length(geneset$unique)){
   gene_list[[i]] <- match(c(geneset$unique[[i]], geneset$shared[[i]], geneset$enriched[[i]]), so@gene.name)
@@ -56,13 +58,14 @@ middle_pos <- a %>%
   summarise(aa = mean(UMAP1), bb = mean(UMAP2))
 
 group_id <- t(combn(1:5, 2))
+edge_weight <- apply(group_id, 1, function(x){mean(edge_mat[gene_list[[x[1]]], gene_list[[x[2]]]])})
 
 segment_pos <- data.frame(xstart = middle_pos$aa[group_id[,1]], 
                           ystart = middle_pos$bb[group_id[,1]], 
                           xend = middle_pos$aa[group_id[,2]], 
                           yend = middle_pos$bb[group_id[,2]],
-                          weight = 0.05 * apply(group_id, 1, function(x){length(intersect(gene_list[[x[1]]], gene_list[[x[2]]]))}))
-segment_pos <- segment_pos[segment_pos$weight > 0,]
+                          weight = edge_weight)
+segment_pos <- segment_pos[segment_pos$weight > 0.1,]
 
 g3 <- ggplot() + 
   geom_point(data = a, aes(x = UMAP1, y = UMAP2, color = SifiNet_GSVA_cluster), size = 0.1) +
@@ -250,5 +253,5 @@ setwd("../../")
 ggarrange(g3, g2, g1, g4, g7, g8,
           nrow = 2, ncol = 3,
           labels = "auto")
-ggsave("Fig4.jpeg", width = 12, height = 6, 
-       units = "in", device='jpeg', dpi=1200)
+ggsave("Fig4.pdf", width = 12, height = 6, 
+       units = "in", device='pdf', dpi=1200)

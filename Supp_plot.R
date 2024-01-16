@@ -7,6 +7,11 @@ library(cogena)
 library(Matrix)
 library(ggnewscale)
 library(stringr)
+library(SiFINeT)
+library(ggvenn)
+library(igraph)
+library(ggraph)
+library(reshape2)
 
 set.seed(1)
 
@@ -51,8 +56,8 @@ g2 <- DimPlot(so, reduction = "umap", group.by = "group2") +
   )
 
 ggarrange(g1, g2, nrow = 1, labels = "auto")
-ggsave("../../Supp_sd1_umap.jpeg", width = 6, height = 2.5, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../Supp_sd1_umap.pdf", width = 6, height = 2.5, 
+       units = "in", device='pdf', dpi=1200)
 
 # Supp_mono_clu
 # In plot3
@@ -117,8 +122,8 @@ g2 <- g1 +
                               "TCM_1"), size = 3) + 
   coord_cartesian(ylim=c(1, 7), clip="off")
 g2
-ggsave("../../Supp_cd8_trans.jpeg", width = 6, height = 2.5, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../Supp_cd8_trans.pdf", width = 6, height = 2.5, 
+       units = "in", device='pdf', dpi=1200)
 
 
 # Supp_mdata_time_mem
@@ -169,8 +174,8 @@ p2 <- ggplot(time_mem_data, aes(log_ncell, log_peak_memory)) +
 
 p3 <- ggarrange(p1, p2, nrow = 1,
                 labels = "auto")
-ggsave("../../Supp_mdata_time_mem.jpeg", width = 8, height = 3, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../Supp_mdata_time_mem.pdf", width = 8, height = 3, 
+       units = "in", device='pdf', dpi=1200)
 
 
 
@@ -210,8 +215,8 @@ ggplot(plotdata, aes(x=Setting, y=ARI, fill = Method)) +
         legend.text=element_text(size=12,face="bold"), 
         legend.title=element_text(size=14,face="bold"))
 
-ggsave("../../../Supp_sd1_cluster.jpeg", width = 4, height = 3, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../../Supp_sd1_cluster.pdf", width = 4, height = 3, 
+       units = "in", device='pdf', dpi=1200)
 
 # Supp_imm_coex
 
@@ -282,8 +287,8 @@ ggplot(plotdata, aes(plotx, ploty, color = label)) +
   scale_color_manual(values = c("orange", "green", "red", "blue", "gray")) + 
   guides(fill=guide_legend(title="Coexpression type"))
 
-ggsave("../../Supp_imm_coex.jpeg", width = 5, height = 3, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../Supp_imm_coex.pdf", width = 5, height = 3, 
+       units = "in", device='pdf', dpi=1200)
 
 
 
@@ -364,5 +369,260 @@ g4 <- ggarrange(g1, g2, g3, ncol = 1,
                 labels = "auto")
 
 
-ggsave("../../Supp_thres.jpeg", width = 5, height = 9, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../Supp_thres.pdf", width = 5, height = 9, 
+       units = "in", device='pdf', dpi=1200)
+
+
+# Supp_thm1
+set.seed(1)
+gene.means <- rgamma(1000, shape = 81, rate = 9)
+gene.means.fc <- matrix(gene.means, nrow = 1000, ncol = 1000, byrow = FALSE)
+Y <- matrix(rpois(1000000, lambda = gene.means.fc), 
+            nrow = 1000, ncol = 1000)
+ncell <- c(100, 1000)
+out <- list()
+for (i in 1:2){
+  so <- create_SiFINeT_object(counts = Y[, 1:ncell[i]], gene.name = 1:nrow(Y))
+  so <- quantile_thres(so)
+  so <- feature_coexp(so)
+  coexp <- so@coexp
+  coexp_value <- coexp[upper.tri(coexp)]
+  out[[i]] <- coexp_value
+}
+
+x <- seq(-5, 5, length.out = 1000)
+yn <- dnorm(x)
+
+plotdata <- data.frame(value = c(out[[1]], out[[2]]), 
+                       N = factor(rep(c(100, 1000), 
+                                      c(length(out[[1]]), length(out[[2]]))), 
+                                  levels = c(100, 1000)))
+plotdata2 <- data.frame(density = yn, value = x)
+
+ggplot() +
+  stat_density(data = plotdata, aes(x=value, group=N, col = N), geom="line", 
+               position = "identity", linewidth = 1.2) + 
+  geom_line(data = plotdata2, aes(x=value, y=density), alpha = 0.5, linewidth = 0.5) +
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) + 
+  guides(colour = guide_legend(override.aes=list(size=1)))
+
+
+
+
+ggsave("../../Supp_thm1.pdf", width = 5, height = 4, 
+       units = "in", device='pdf', dpi=1200)
+
+
+# Supp_mono_venn
+setwd("../../Experimental/Monoclonal/")
+
+set.seed(1)
+genenames <- readRDS("genename.rds")
+ccgene <- readRDS("cellcycle/ccgene.rds")
+ccid <- match(ccgene, tolower(genenames))
+ccgene <- ccgene[!is.na(ccid)]
+ccid <- ccid[!is.na(ccid)]
+
+
+sio <- readRDS("so.rds")
+out <- sio@featureset
+rm(sio)
+sifi_res <- unique(unlist(out))
+sifi_id <- match(sifi_res, genenames)
+out <- readRDS("DESeq2/DESeq2.rds")
+deseq_id <- which(out[,2] <= 0.05)
+deseq_res <- genenames[deseq_id]
+
+plotdata <- list(ccgene, tolower(sifi_res), tolower(deseq_res))
+names(plotdata) <- c("Benchmark", "SifiNet", "CIDR-DESeq2-TS")
+ggvenn(plotdata)
+ggsave("../../Supp_mono_venn.pdf", width = 4, height = 5, 
+       units = "in", device='pdf', dpi=1200)
+
+
+
+
+# Supp_mono_net
+setwd("../../Experimental/Monoclonal/")
+#https://stackoverflow.com/questions/37378744/igraph-grouped-layout-based-on-attribute
+set.seed(1)
+
+sio <- readRDS("so.rds")
+genename <- sio@gene.name
+out <- sio@featureset
+edgemat <- abs(sio@coexp - sio@est_ms$mean) >= sio@thres
+rm(sio)
+
+set1 <- c(out$unique[[1]], out$shared[[1]], out$enriched[[1]])
+set2 <- c(out$unique[[2]], out$shared[[2]], out$enriched[[2]])
+set_inter <- intersect(set1, set2)
+set1_only <- setdiff(set1, set_inter)
+set2_only <- setdiff(set2, set_inter)
+idx1 <- match(set1_only, genename)
+idx2 <- match(set2_only, genename)
+idx3 <- match(set_inter, genename)
+idx <- c(idx1, idx2, idx3)
+
+group <- rep(1:3, c(length(idx1), length(idx2), length(idx3)))
+edgemat1 <- edgemat[idx, idx]
+colnames(edgemat1) <- genename[idx]
+rownames(edgemat1) <- genename[idx]
+idxlist <- list(idx1, idx2, idx3)
+for (i in 1:3){
+  for (j in 1:3){
+    edgemat1[group == i, group == j] <- (sum(edgemat[idxlist[[i]], idxlist[[j]]]) / length(idxlist[[i]]) / length(idxlist[[j]]))^5
+  }
+}
+
+G <- graph_from_adjacency_matrix(edgemat1, "undirected", weighted = TRUE)
+G_Grouped <- G
+
+for(i in unique(group)) {
+  GroupV = which(group == i)
+  G_Grouped = add_edges(G_Grouped, combn(GroupV, 2), attr=list(weight=2))
+} 
+LO <- layout_with_fr(G_Grouped)
+
+pos <- data.frame(LO, genename[idx])
+colnames(pos) <- c("x", "y", "name")
+pos$group <- factor(group)
+G_edge <- get.data.frame(G)
+G_edge$start.x <- pos[match(G_edge$from, pos[,3]), 1] 
+G_edge$start.y <- pos[match(G_edge$from, pos[,3]), 2]
+G_edge$end.x <- pos[match(G_edge$to, pos[,3]), 1]
+G_edge$end.y <- pos[match(G_edge$to, pos[,3]), 2]
+
+p1 <- ggplot() +
+  geom_segment(data=G_edge,aes(x=start.x,xend = end.x, y=start.y,yend = end.y,size=weight),colour="lightgray", size = 0.00002) +
+  geom_point(data=pos,aes(x=x,y=y,col=group),size=2) +  # adds a black border around the nodes
+  scale_color_manual(name="Gene set", values = c("#1b9e77", "#d95f02", "#e6ab02"), labels = c("Set 1 core", "Set 2 core", "Shared")) + 
+  theme_bw()+  # use the ggplot black and white theme
+  theme(legend.position = "none",
+        axis.text.x = element_blank(),  # remove x-axis text
+        axis.text.y = element_blank(), # remove y-axis text
+        axis.ticks = element_blank(),  # remove axis ticks
+        axis.title.x = element_blank(), # remove x-axis labels
+        axis.title.y = element_blank(), # remove y-axis labels
+        panel.background = element_blank(), 
+        panel.border =element_blank(), 
+        panel.grid.major = element_blank(),  #remove major-grid labels
+        panel.grid.minor = element_blank(),  #remove minor-grid labels
+        plot.background = element_blank())
+
+
+ref1 <- sample(1:2, length(idx1), replace = T)
+ref2 <- sample(1:2, length(idx2), replace = T)
+ref3 <- sample(1:2, length(idx3), replace = T)
+
+geneset_topology2 <- function(id_list, edge_mat, weightthres = 0.3, edge_method = 2, node_color = "black",
+                              shiftsize = 0.05, boundsize = 0.1, prefix = "", set_name = NULL){
+  if ((edge_method == 1) & (weightthres < 1)){
+    weightthres <- 5
+  }
+  
+  nodes <- data.frame(1:length(id_list), sapply(id_list, length))
+  if (is.null(set_name)){
+    nodes[,1] <- paste(prefix, nodes[,1], sep = "")
+  } else{
+    nodes[,1] <- set_name
+  }
+  edge <- data.frame(t(combn(1:length(id_list), 2)))
+  edge$edge_weight <- apply(edge, 1, function(x){mean(edge_mat[id_list[[x[1]]], id_list[[x[2]]]])})
+  if (is.null(set_name)){
+    edge[,1] <- paste(prefix, edge[,1], sep = "")
+    edge[,2] <- paste(prefix, edge[,2], sep = "")
+  } else{
+    edge[,1] <- set_name[edge[,1]]
+    edge[,2] <- set_name[edge[,2]]
+  }
+  edge <- edge[edge$edge_weight > weightthres, ]
+  me <- max(edge$edge_weight)
+  edge$scaled_edge_weight <- edge$edge_weight / me
+  colnames(nodes) <- c("node_id", "gene_count")
+  
+  g <- graph_from_data_frame(edge, directed = FALSE, nodes)
+  
+  lay_temp <- create_layout(g, layout = "circle")
+  shift <- shiftsize * (max(lay_temp$y) - min(lay_temp$y) + max(lay_temp$x) - min(lay_temp$x))
+  bound <- boundsize * (max(lay_temp$y) - min(lay_temp$y) + max(lay_temp$x) - min(lay_temp$x))
+  gt <- ggraph(lay_temp) + 
+    geom_edge_link(aes(width = scaled_edge_weight))  + 
+    scale_edge_width(range=c(0.5,2)) +
+    geom_node_point(aes(col = node_color), size = 5, shape = 16) +
+    scale_color_manual(name="Gene set", values = node_color, labels = set_name) + 
+    theme_void() + 
+    theme(legend.text=element_text(size = 12), legend.title=element_text(size = 14)) + 
+    xlim(c(min(lay_temp$x) - bound, max(lay_temp$x) + bound)) + 
+    ylim(c(min(lay_temp$y) - bound, max(lay_temp$y) + bound)) +
+    guides(size = "none", edge_width = "none",
+           colour = guide_legend(override.aes = list(size=5)))
+  return(gt)
+}
+
+p3 <- geneset_topology2(list(idx1[ref1 == 1], idx1[ref1 == 2], 
+                             idx2[ref2 == 1], idx2[ref2 == 2],
+                             idx3[ref3 == 1], idx3[ref3 == 2]), 
+                        edgemat, 
+                        node_color = c("#1b9e77", "#1b9e78", 
+                                       "#d95f02", "#d95f03", 
+                                       "#e6ab02", "#e6ab03"),
+                        set_name = c("Set 1 core 1", "Set 1 core 2", 
+                                     "Set 2 core 1", "Set 2 core 2", 
+                                     "Shared 1", "Shared 2"))
+
+ggarrange(p1, p3, nrow = 1, common.legend = TRUE, 
+          legend = "right", legend.grob = get_legend(p2), 
+          labels = c("a", "b"))
+
+ggsave("../../Supp_mono_net.pdf", width = 6, height = 2.5, 
+       units = "in", device='pdf', dpi=1200)
+
+#supp_sd2_setting
+
+a <- matrix(0.0, nrow = 9, ncol = 9)
+a[1, ] <- c(0.8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+a[2, ] <- c(0.6, 0.6, 0.5, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0)
+a[3, ] <- c(0.0, 0.8, 0.8, 0.8, 0.0, 0.0, 0.0, 0.0, 0.0)
+a[4, ] <- c(0.0, 0.4, 0.5, 0.6, 0.6, 0.0, 0.0, 0.0, 0.0)
+a[5, ] <- c(0.0, 0.0, 0.0, 0.0, 0.8, 0.0, 0.0, 0.0, 0.0)
+a[6, ] <- c(0.0, 0.0, 0.0, 0.0, 0.6, 0.6, 0.5, 0.4, 0.0)
+a[7, ] <- c(0.0, 0.0, 0.0, 0.0, 0.0, 0.8, 0.8, 0.8, 0.0)
+a[8, ] <- c(0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.5, 0.6, 0.6)
+a[9, ] <- c(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.8)
+
+b <- a
+b[b != 0] <- exp(b[b != 0] + 0.02)
+b[b == 0] <- 1.0
+b <- cbind(c("G1", "G2", "G3", "G4", 
+             "G5", "G6", "G7", "G8", "G9"), b)
+b <- data.frame(b)
+colnames(b) <- c("Geneset", "1", "2a", "2b", "2c", 
+                 "3", "4a", "4b", "4c", "5")
+plotdata <- melt(b, id.vars = c("Geneset"), variable.name = "Cellpop")
+plotdata$value <- as.numeric(plotdata$value)
+plotdata$Geneset <- as.factor(plotdata$Geneset)
+
+ggplot(plotdata, aes(Cellpop, Geneset)) +
+  geom_tile(aes(fill = value)) +
+  scale_fill_gradient(low = "white", high = "red") + 
+  theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+  theme(axis.ticks.x=element_blank(),
+        legend.position = "none") + 
+  geom_vline(xintercept = c(1.5, 4.5, 5.5, 8.5)) + 
+  labs(x = "Cell type", y = "Feature gene set")
+
+ggsave("../../Supp_sd2_setting.pdf", width = 5, height = 2.5, 
+       units = "in", device='pdf', dpi=1200)
+
+#Supp_pos_thres
+cal_conn(matrix(c(0,1,1,1,1,0,0,0,
+                  1,0,1,1,1,0,0,0,
+                  1,1,0,1,1,0,0,0,
+                  1,1,1,0,1,1,1,1,
+                  1,1,1,1,0,1,1,1,
+                  0,0,0,1,1,0,1,1,
+                  0,0,0,1,1,1,0,1,
+                  0,0,0,1,1,1,1,0), nrow = 8, ncol = 8), thres = 0.5)

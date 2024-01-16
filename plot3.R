@@ -7,6 +7,7 @@ library(M3C)
 library(Matrix)
 library(tidyverse)
 library(ggforce)
+library(caret)
 
 setwd("~/Desktop/SiFINeT/Result_final")
 setwd("Experimental/Monoclonal/")
@@ -41,9 +42,10 @@ so <- CellCycleScoring(so, s.features = tolower(s.genes),
 ccgroup <- so[[]]$Phase
 gsva_mat2 <- rbind(gsva_mat, rep(0, ncol(gsva_mat)))
 gsva_group <- apply(gsva_mat2[,], 2, which.max)
+gsva_group_o <- ifelse(gsva_group == 3, 0, ifelse(gsva_group == 1, 1, 2))
 cluster_d <- readRDS("cluster.rds")
 cluster_k <- readRDS("cluster_k.rds")
-so <- AddMetaData(so, 3 - gsva_group, col.name = "gsva_cell_type")
+so <- AddMetaData(so, gsva_group_o, col.name = "gsva_cell_type")
 so <- AddMetaData(so, ccgroup, col.name = "ccgroup")
 so <- AddMetaData(so, cluster_d, col.name = "CIDRcluster_default")
 so <- AddMetaData(so, cluster_k, col.name = "CIDRcluster")
@@ -51,7 +53,10 @@ so <- AddMetaData(so, cluster_k, col.name = "CIDRcluster")
 p1 <- DimPlot(so, reduction = "umap", group.by = "ccgroup", dims = c(1,2), 
               cols = c("orange", "blue", "green")) + labs(title = "Seurat score")
 p2 <- DimPlot(so, reduction = "umap", group.by = "gsva_cell_type", dims = c(1,2), 
-              cols = c("orange", "blue", "green")) + labs(title = "SifiNet")
+              cols = c("orange", "green", "blue")) + labs(title = "SifiNet")
+p2n <- DimPlot(so, reduction = "umap", group.by = "gsva_cell_type", dims = c(1,2)) +
+  scale_color_manual(labels=factor(c("Early G1","Late G1/S","G2/M"), levels = c("Early G1","Late G1/S","G2/M")),
+                     values=c("orange", "green", "blue")) + labs(title = "SifiNet")
 p3 <- DimPlot(so, reduction = "umap", group.by = "CIDRcluster", dims = c(1, 2), 
               cols = c("blue", "green", "orange")) + labs(title = "CIDR clustering") + 
   geom_circle(aes(x0=1, y0=-0.8, r=0.8), col = "red", inherit.aes = FALSE) + 
@@ -60,15 +65,66 @@ p3 <- DimPlot(so, reduction = "umap", group.by = "CIDRcluster", dims = c(1, 2),
 adjustedRandIndex(gsva_group, ccgroup)
 adjustedRandIndex(cluster_k, ccgroup)
 
-p4 <- ggarrange(p2, p1, p3, nrow = 1, common.legend = TRUE, 
-                legend = "right", legend.grob = get_legend(p1), 
+p4 <- ggarrange(p2n, p1, p3, nrow = 1, common.legend = TRUE, 
+                legend = "right", legend.grob = get_legend(p2n), 
                 labels = c("a", "b", "c"))
 
 psupp <- DimPlot(so, reduction = "umap", group.by = "CIDRcluster_default", dims = c(1, 2)) + labs(title = NULL)
-psupp
-ggsave("../../Supp_mono_clu.jpeg", width = 2.5, height = 2.5, 
-       units = "in", device='jpeg', dpi=600)
+ggsave("../../Supp_mono_clu.pdf", width = 2.5, height = 2.5, 
+       units = "in", device='pdf', dpi=1200)
 
+ccgroupn <- ifelse(ccgroup == "G1", 0, ifelse(ccgroup == "G2M", 2, 1))
+conf1 <- confusionMatrix(factor(gsva_group_o, levels = 2:0), factor(ccgroupn, levels = 2:0), 
+                         dnn = c("Prediction", "Reference"))
+plt <- as.data.frame(conf1$table)
+plt$Prediction <- factor(plt$Prediction, levels=rev(levels(plt$Prediction)))
+ari1 <- adjustedRandIndex(gsva_group, ccgroupn)
+pconf1 <- ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
+  geom_tile() + geom_text(aes(label=Freq)) +
+  scale_fill_gradient(low="white", high="#009194") +
+  labs(x = "SifiNet",y = "Seurat score") +
+  ggtitle(paste("ARI = ", round(ari1, 3), sep = "")) +
+  scale_x_discrete(labels=c("Early G1","Late G1/S","G2/M")) +
+  scale_y_discrete(labels=c("G2/M","Late G1/S","Early G1")) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+
+cidrn <- ifelse(cluster_k == 1, 2, ifelse(cluster_k == 2, 1, 0))
+conf2 <- confusionMatrix(factor(cidrn, levels = 2:0), factor(ccgroupn, levels = 2:0), 
+                         dnn = c("Prediction", "Reference"))
+plt <- as.data.frame(conf2$table)
+plt$Prediction <- factor(plt$Prediction, levels=rev(levels(plt$Prediction)))
+ari2 <- adjustedRandIndex(cidrn, ccgroupn)
+pconf2 <- ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
+  geom_tile() + geom_text(aes(label=Freq)) +
+  scale_fill_gradient(low="white", high="#009194") +
+  labs(x = "CIDR",y = "Seurat score") +
+  ggtitle(paste("ARI = ", round(ari2, 3), sep = "")) +
+  scale_x_discrete(labels=c("Early G1","Late G1/S","G2/M")) +
+  scale_y_discrete(labels=c("G2/M","Late G1/S","Early G1")) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+
+conf3 <- confusionMatrix(factor(gsva_group_o, levels = 2:0), factor(cidrn, levels = 2:0), 
+                         dnn = c("Prediction", "Reference"))
+plt <- as.data.frame(conf3$table)
+plt$Prediction <- factor(plt$Prediction, levels=rev(levels(plt$Prediction)))
+ari3 <- adjustedRandIndex(gsva_group, cidrn)
+pconf3 <- ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
+  geom_tile() + geom_text(aes(label=Freq)) +
+  scale_fill_gradient(low="white", high="#009194") +
+  labs(x = "SifiNet",y = "CIDR") +
+  ggtitle(paste("ARI = ", round(ari3, 3), sep = "")) +
+  scale_x_discrete(labels=c("Early G1","Late G1/S","G2/M")) +
+  scale_y_discrete(labels=c("G2/M","Late G1/S","Early G1")) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+
+pconf <- ggarrange(pconf1, pconf2, pconf3, nrow = 1, 
+                   labels = c("a", "b", "c"))
+pconf
+ggsave("../../Supp_mono_confusion.pdf", width = 8, height = 2.5, 
+       units = "in", device='pdf', dpi=1200)
 setwd("../BoneMarrow")
 set.seed(1)
 
@@ -95,7 +151,7 @@ plotdata1$CellGroup <- factor(plotdata1$CellGroup, levels = 1:7,
                                          "Early myeloid progenitors",
                                          "Granulocyte",
                                          "Macrophage",
-                                         "Monocyte/dentritic",
+                                         "Monocyte/dendritic",
                                          "Lymphoid progenitors"))
 g1 <- ggplot() + 
   geom_point(data = plotdata1, aes(x = GSVA_layer1_PC1, y = GSVA_layer1_PC2, color = CellGroup), size = 1) +
@@ -122,7 +178,7 @@ plotdata2$CellGroup <- factor(plotdata2$CellGroup, levels = 1:7,
                                          "Early myeloid progenitors",
                                          "Granulocyte",
                                          "Macrophage",
-                                         "Monocyte/dentritic",
+                                         "Monocyte/dendritic",
                                          "Lymphoid progenitors"))
 g2 <- ggplot() + 
   geom_point(data = plotdata2, aes(x = GSVA_layer2_PC1, y = GSVA_layer2_PC2, color = CellGroup), size = 1) +
@@ -208,7 +264,7 @@ g2 <- g1 +
   annotate("text",x = c(0, cumsum(cell_group[1:(length(cell_group) - 1)])) + cell_group / 2, 
            y=-0.9, label = c("Granulocyte",
                              "Macrophage",
-                             "Monocyte/dentritic",
+                             "Monocyte/dendritic",
                              "Lymphoid progenitors",
                              "Early myeloid progenitors",
                              "Megakaryocyte/erythrocyte"), size = 3, angle = 10) + 
@@ -216,7 +272,7 @@ g2 <- g1 +
 
 
 g7 <- ggarrange(p4, g5, g2, ncol = 1, labels = c("", "", "f"))
-ggsave("../../Fig3.jpeg", width = 8, height = 9, 
-       units = "in", device='jpeg', dpi=1200)
+ggsave("../../Fig3.pdf", width = 8, height = 9, 
+       units = "in", device='pdf', dpi=1200)
 
 rm(list = ls())

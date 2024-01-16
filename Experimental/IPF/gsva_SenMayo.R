@@ -17,11 +17,7 @@ Y <- so@assays$SCT@data
 SenMayo <- read_excel("41467_2022_32552_MOESM4_ESM.xlsx")
 geneset <- SenMayo$`Gene(human)`
 
-so <- readRDS("so.rds")
-sifiset <- tolower(unique(unlist(so@featureset)))
-geneset1 <- setdiff(tolower(geneset), sifiset)
-
-temp <- match(tolower(geneset1), tolower(genename))
+temp <- match(tolower(geneset), tolower(genename))
 gene_list[[1]] <- temp[!is.na(temp)]
 
 outfile <- "gsva_res_SenMayo.rds"

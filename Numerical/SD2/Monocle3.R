@@ -2,6 +2,7 @@ library(tidyverse)
 library(monocle3)
 library(ggplot2)
 
+set.seed(1)
 Y <- readRDS("matrix.rds")
 idx <- readRDS("name.rds")
 
@@ -27,9 +28,9 @@ cds <- reduce_dimension(cds, reduction_method = "UMAP")
 
 cds <- cluster_cells(cds, k=20)
 
-
-cds <- learn_graph(cds)
-g1 <- plot_cells(cds, group_label_size = 10, label_cell_groups = F, trajectory_graph_segment_size = 2, 
+saveRDS(cds, "SD2_monocle3_cds.rds")
+cds <- learn_graph(cds, use_partition = F)
+g1 <- plot_cells(cds, color_cells_by = "cell_type", group_label_size = 10, label_cell_groups = F, trajectory_graph_segment_size = 2, 
                  label_leaves = F, label_roots = F, label_branch_points = F) + theme(legend.position = "none")
 g1 <- g1 + xlab("UMAP1") + ylab("UMAP2")
 saveRDS(g1, "SD2_monocle3_plot.rds")

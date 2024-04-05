@@ -157,13 +157,13 @@ grid.text(unit(0.86, "npc"), unit(0.75, "npc"),
           label=expression(paste('SifiNet'),'type=4'), 
           hjust = 0, vjust=0, gp=gpar(fontsize=7, fontface = "bold"))
 grid.text(unit(0.86, "npc"), unit(0.67, "npc"), 
-          label=expression(paste('Cluster-independent\napproach'),'type=4'), 
+          label=expression(paste('Cluster-free methods\nHVG'),'type=4'), 
           hjust = 0, vjust=0, gp=gpar(fontsize=7, fontface = "bold"))
 grid.text(unit(0.86, "npc"), unit(0.86, "npc"), 
-          label=expression(paste('Cluster-based methods\nOracle cluster'),'type=4'), 
+          label=expression(paste('Cluster-based methods\nOracle-cluster'),'type=4'), 
           hjust = 0, vjust=0, gp=gpar(fontsize=7, fontface = "bold"))
 grid.text(unit(0.86, "npc"), unit(0.32, "npc"), 
-          label=expression(paste('Cluster-based methods\nTwo step'),'type=4'), 
+          label=expression(paste('Cluster-based methods\nTwo-step'),'type=4'), 
           hjust = 0, vjust=0, gp=gpar(fontsize=7, fontface = "bold"))
 dev.off()
 

@@ -45,10 +45,14 @@ gsva_group <- apply(gsva_mat2[,], 2, which.max)
 gsva_group_o <- ifelse(gsva_group == 3, 0, ifelse(gsva_group == 1, 1, 2))
 cluster_d <- readRDS("cluster.rds")
 cluster_k <- readRDS("cluster_k.rds")
-so <- AddMetaData(so, gsva_group_o, col.name = "gsva_cell_type")
-so <- AddMetaData(so, ccgroup, col.name = "ccgroup")
-so <- AddMetaData(so, cluster_d, col.name = "CIDRcluster_default")
-so <- AddMetaData(so, cluster_k, col.name = "CIDRcluster")
+
+meta <- data.frame(gsva_cell_type = gsva_group_o,
+                   ccgroup = ccgroup,
+                   CIDRcluster_default = cluster_d,
+                   CIDRcluster = cluster_k)
+rownames(meta) <- colnames(data)
+
+so <- AddMetaData(so, meta)
 
 p1 <- DimPlot(so, reduction = "umap", group.by = "ccgroup", dims = c(1,2), 
               cols = c("orange", "blue", "green")) + labs(title = "Seurat score")
@@ -86,7 +90,9 @@ pconf1 <- ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
   ggtitle(paste("ARI = ", round(ari1, 3), sep = "")) +
   scale_x_discrete(labels=c("Early G1","Late G1/S","G2/M")) +
   scale_y_discrete(labels=c("G2/M","Late G1/S","Early G1")) +
-  theme(legend.position = "none",
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
         plot.title = element_text(hjust = 0.5))
 
 cidrn <- ifelse(cluster_k == 1, 2, ifelse(cluster_k == 2, 1, 0))
@@ -102,7 +108,9 @@ pconf2 <- ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
   ggtitle(paste("ARI = ", round(ari2, 3), sep = "")) +
   scale_x_discrete(labels=c("Early G1","Late G1/S","G2/M")) +
   scale_y_discrete(labels=c("G2/M","Late G1/S","Early G1")) +
-  theme(legend.position = "none",
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
         plot.title = element_text(hjust = 0.5))
 
 conf3 <- confusionMatrix(factor(gsva_group_o, levels = 2:0), factor(cidrn, levels = 2:0), 
@@ -117,7 +125,9 @@ pconf3 <- ggplot(plt, aes(Prediction,Reference, fill= Freq)) +
   ggtitle(paste("ARI = ", round(ari3, 3), sep = "")) +
   scale_x_discrete(labels=c("Early G1","Late G1/S","G2/M")) +
   scale_y_discrete(labels=c("G2/M","Late G1/S","Early G1")) +
-  theme(legend.position = "none",
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none",
         plot.title = element_text(hjust = 0.5))
 
 pconf <- ggarrange(pconf1, pconf2, pconf3, nrow = 1, 
@@ -131,6 +141,7 @@ set.seed(1)
 # SiFINeT+GSVA
 gsvares <- readRDS("gsva_res.rds")
 gsvares <- rbind(gsvares[2,], gsvares[1,])
+# table(colSums(gsvares > 0))
 color1 <- ifelse(gsvares[1,] > 0, 1, ifelse(gsvares[2,] > 0, 2, 3))
 pcares <- prcomp(t(gsvares))
 

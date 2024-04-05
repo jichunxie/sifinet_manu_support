@@ -1,9 +1,8 @@
 source("../../../code/run_singleCellHaystack.R")
 
-for (i in 11:20){
-  
-	set.seed(i)
-	data1 <- readRDS(paste("../data/", i, "_matrix.rds", sep = ""))
+for (i in 1:100){
+  set.seed(i)
+  data1 <- readRDS(paste("../data/", i, "_matrix.rds", sep = ""))
   
   out <- run_singleCellHaystack(data1)
   

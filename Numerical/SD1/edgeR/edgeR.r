@@ -2,9 +2,9 @@ source("../../../code/run_edgeR.R")
 
 cluster_setting <- c("true", "seurat", "louvain", "cidr")
 
-for (i in 41:50){
+for (i in 1:100){
   set.seed(i)
-data1 <- readRDS(paste("../data/", i, "_matrix.rds", sep = ""))
+  data1 <- readRDS(paste("../data/", i, "_matrix.rds", sep = ""))
   
   for (j in cluster_setting){
     cluster <- readRDS(paste("../data/", i, "_cluster_", j, ".rds", sep = ""))

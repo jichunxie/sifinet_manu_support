@@ -11,7 +11,7 @@ knn_self <- function(distmat, k){
   return(out)
 }
 
-for (i in 41:50){
+for (i in 1:100){
   set.seed(i)
   data <- readRDS(paste(i, "_matrix.rds", sep = ""))
   
